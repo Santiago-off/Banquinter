@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null }
+    function isUser(uid) { return isSignedIn() && request.auth.uid == uid }
+    function isAdmin() {
+      // Admin recognized by role field in their user doc
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+    }
+
+    match /users/{uid} {
+      allow read: if isUser(uid) || isAdmin();
+      allow write: if isUser(uid) || isAdmin();
+      allow update: if isUser(uid) || isAdmin();
+      // Prevent user from elevating own role
+      allow update: if isUser(uid) && (request.resource.data.role == resource.data.role);
+    }
+
+    match /accounts/{uid} {
+      allow read: if isUser(uid) || isAdmin();
+      // Only allow balance changes that result from a transaction path
+      allow write, update: if isUser(uid) || isAdmin();
+      // User cannot set negative balance or change frozen flag
+      allow update: if isUser(uid) &&
+        request.resource.data.balance >= 0 &&
+        request.resource.data.frozen == resource.data.frozen &&
+        request.resource.data.number == resource.data.number;
+    }
+
+    match /piggy/{uid} {
+      allow read: if isUser(uid) || isAdmin();
+      allow write, update: if isUser(uid) || isAdmin();
+    }
+
+    match /transfers/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /emailToUid/{email} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == email &&
+        request.resource.data.uid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /config/global {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
