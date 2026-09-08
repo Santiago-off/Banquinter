@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Simulador bancario",
+    "output": "arquitectura.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "dinero",
+        "label": "Movimiento de dinero",
+        "focus": [
+          "app",
+          "servicios",
+          "cuentas",
+          "transferencias"
+        ],
+        "note": "Una transferencia descuenta, ingresa y deja constancia dentro de una sola transacción: o pasa todo, o no pasa nada."
+      },
+      {
+        "id": "acceso",
+        "label": "Entrada al banco",
+        "focus": [
+          "cliente",
+          "app",
+          "auth",
+          "reglas"
+        ],
+        "note": "Dos factores propios: la contraseña de Firebase Auth y una clave de banco guardada como hash."
+      },
+      {
+        "id": "datos",
+        "label": "Reparto de datos",
+        "focus": [
+          "reglas",
+          "usuarios",
+          "hucha",
+          "config"
+        ],
+        "note": "Cada colección tiene su propia condición de acceso y el historial de transferencias no admite borrado."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cliente",
+      "type": "external",
+      "label": "Cliente",
+      "sublabel": "Navegador",
+      "pos": [
+        40,
+        329
+      ],
+      "size": [
+        145,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "App React",
+      "sublabel": "Vite · TypeScript",
+      "pos": [
+        265,
+        326
+      ],
+      "size": [
+        170,
+        66
+      ],
+      "tag": "guardas de ruta"
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Firebase Auth",
+      "sublabel": "+ clave de banco",
+      "pos": [
+        545,
+        130
+      ],
+      "size": [
+        190,
+        62
+      ]
+    },
+    {
+      "id": "servicios",
+      "type": "backend",
+      "label": "services/firestore",
+      "sublabel": "operaciones de dinero",
+      "pos": [
+        545,
+        320
+      ],
+      "size": [
+        190,
+        78
+      ],
+      "tag": "runTransaction"
+    },
+    {
+      "id": "reglas",
+      "type": "security",
+      "label": "Reglas de Firestore",
+      "sublabel": "autorización",
+      "pos": [
+        835,
+        326
+      ],
+      "size": [
+        175,
+        66
+      ]
+    },
+    {
+      "id": "usuarios",
+      "type": "database",
+      "label": "users",
+      "sublabel": "perfil",
+      "pos": [
+        1130,
+        100
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "cuentas",
+      "type": "database",
+      "label": "accounts",
+      "sublabel": "saldo",
+      "pos": [
+        1130,
+        215
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "transferencias",
+      "type": "database",
+      "label": "transfers",
+      "sublabel": "historial",
+      "pos": [
+        1130,
+        330
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "hucha",
+      "type": "database",
+      "label": "piggy",
+      "sublabel": "ahorro",
+      "pos": [
+        1130,
+        445
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "config",
+      "type": "database",
+      "label": "config",
+      "sublabel": "TAE global",
+      "pos": [
+        1130,
+        560
+      ],
+      "size": [
+        150,
+        58
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Firestore · acceso por reglas",
+      "wraps": [
+        "usuarios",
+        "cuentas",
+        "transferencias",
+        "hucha",
+        "config"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "entrada",
+      "from": "cliente",
+      "to": "app",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sesion",
+      "from": "app",
+      "to": "auth",
+      "label": "inicio de sesión",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "left",
+      "labelAt": [
+        490,
+        240
+      ]
+    },
+    {
+      "id": "opera",
+      "from": "app",
+      "to": "servicios",
+      "label": "operaciones",
+      "variant": "emphasis",
+      "labelAt": [
+        490,
+        344
+      ]
+    },
+    {
+      "id": "escribe",
+      "from": "servicios",
+      "to": "reglas",
+      "label": "lee y escribe",
+      "variant": "emphasis",
+      "labelAt": [
+        785,
+        344
+      ]
+    },
+    {
+      "id": "perfil",
+      "from": "reglas",
+      "to": "usuarios",
+      "via": [
+        [
+          1050,
+          359
+        ],
+        [
+          1050,
+          129
+        ]
+      ]
+    },
+    {
+      "id": "saldo",
+      "from": "reglas",
+      "to": "cuentas",
+      "via": [
+        [
+          1080,
+          359
+        ],
+        [
+          1080,
+          244
+        ]
+      ]
+    },
+    {
+      "id": "historial",
+      "from": "reglas",
+      "to": "transferencias",
+      "label": "sin borrado",
+      "variant": "security",
+      "labelAt": [
+        1205,
+        402
+      ]
+    },
+    {
+      "id": "ahorro",
+      "from": "reglas",
+      "to": "hucha",
+      "via": [
+        [
+          1080,
+          359
+        ],
+        [
+          1080,
+          474
+        ]
+      ]
+    },
+    {
+      "id": "tae",
+      "from": "reglas",
+      "to": "config",
+      "label": "solo admin",
+      "variant": "security",
+      "via": [
+        [
+          1050,
+          359
+        ],
+        [
+          1050,
+          589
+        ]
+      ],
+      "labelAt": [
+        1205,
+        632
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cliente",
+      "items": [
+        "React 18 con Vite y TypeScript",
+        "Guardas de ruta separadas para sesión y administración",
+        "Validación de formularios con zod"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dinero",
+      "items": [
+        "Transferencias y hucha dentro de runTransaction",
+        "Descuento, ingreso y registro en una sola operación",
+        "El historial de transferencias no admite borrado"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Cabeceras",
+      "items": [
+        "CSP con origen propio y lista explícita de destinos",
+        "X-Frame-Options DENY y frame-ancestors none",
+        "Permissions-Policy sin cámara, micrófono ni ubicación"
+      ]
+    }
+  ]
+}
